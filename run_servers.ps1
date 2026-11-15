@@ -1,4 +1,4 @@
-# Script de Inicialização dos Serviços Distribuídos (DSD - IFRN)
+﻿# Script de Inicialização dos Serviços Distribuídos (DSD - IFRN)
 # Sobe o Gateway, os dois Microsserviços e o Servidor Web do Frontend
 
 $root = $PSScriptRoot
@@ -36,21 +36,27 @@ Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$root\backend
 Write-Host "[3/4] Iniciando API Gateway na porta 8000..." -ForegroundColor Yellow
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$root\backend\gateway'; Write-Host '--- API GATEWAY (8000) ---' -ForegroundColor Green; & '$venvPython' manage.py runserver 0.0.0.0:8000"
 
-# 4. Servidor Web do Front-end (Porta 3000)
-Write-Host "[4/4] Iniciando Cliente Web na porta 3000..." -ForegroundColor Yellow
+# 4. Service SOAP - Cartório Digital (Porta 8003)
+Write-Host "[4/5] Iniciando Service SOAP (Cartório Digital) na porta 8003..." -ForegroundColor Yellow
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$root'; Write-Host '--- SERVICE SOAP (8003) ---' -ForegroundColor Green; & '$venvPython' backend/service_soap/server.py"
+
+# 5. Servidor Web do Front-end (Porta 3000)
+Write-Host "[5/5] Iniciando Cliente Web na porta 3000..." -ForegroundColor Yellow
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$root\frontend'; Write-Host '--- SAFODRIVE WEB CLIENT (3000) ---' -ForegroundColor Green; & '$venvPython' -m http.server 3000 --bind 0.0.0.0"
 
 Start-Sleep -Seconds 2
 
 Write-Host ""
 Write-Host "==========================================================" -ForegroundColor Green
-Write-Host "   SISTEMA NO AR E PRONTO PARA A APRESENTACAO!" -ForegroundColor Green
+Write-Host "   SISTEMA PRONTO" -ForegroundColor Green
 Write-Host "==========================================================" -ForegroundColor Green
 Write-Host "Acesso neste computador:  http://localhost:3000" -ForegroundColor Cyan
 Write-Host "Acesso por outros PCs/Celulares na rede:" -ForegroundColor Magenta
-Write-Host "  👉 http://$($localIp):3000" -ForegroundColor Yellow
-Write-Host "Swagger UI do Gateway:" -ForegroundColor Cyan
-Write-Host "  👉 http://$($localIp):8000/api/docs/" -ForegroundColor Yellow
+Write-Host "   http://$($localIp):3000" -ForegroundColor Yellow
+Write-Host "Swagger UI do Gateway (REST):" -ForegroundColor Cyan
+Write-Host "   http://$($localIp):8000/api/docs/" -ForegroundColor Yellow
+Write-Host "Contrato WSDL (SOAP):" -ForegroundColor Cyan
+Write-Host "   http://$($localIp):8003/?wsdl" -ForegroundColor Yellow
 Write-Host "==========================================================" -ForegroundColor Green
 
 # Abre automaticamente o navegador

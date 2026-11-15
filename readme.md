@@ -65,3 +65,18 @@ O script inicializará automaticamente:
 - **Documentação Swagger (Gateway):** [http://localhost:8000/api/docs/](http://localhost:8000/api/docs/)
 - **Documentação ReDoc (Gateway):** [http://localhost:8000/api/redoc/](http://localhost:8000/api/redoc/)
 - **Schema OpenAPI:** [http://localhost:8000/api/schema/](http://localhost:8000/api/schema/)
+- **Contrato WSDL (Serviço SOAP):** [http://localhost:8003/?wsdl](http://localhost:8003/?wsdl)
+
+---
+
+## 🏛️ Serviço SOAP & Interoperabilidade (Notarização e Integridade)
+
+Além dos microsserviços REST, a aplicação conta com um serviço SOAP funcional:
+* **Servidor Provedor (`:8003`):** Implementado em Python com a biblioteca **Spyne**, integrado diretamente ao banco de dados do Django (`storage.models.File`). É responsável por emitir hashes SHA-256 criptográficos e auditar a integridade dos arquivos em disco via contrato WSDL.
+* **Cliente Consumidor:** O próprio **Front-end Web em JavaScript** (`:3000`), comprovando interoperabilidade entre tecnologias distintas (Python no servidor e JavaScript no cliente).
+
+### Inicialização Unificada:
+O script PowerShell já inicia todos os 5 serviços automaticamente (Accounts, Storage, Gateway, SOAP e Frontend):
+```powershell
+.\run_servers.ps1
+```
