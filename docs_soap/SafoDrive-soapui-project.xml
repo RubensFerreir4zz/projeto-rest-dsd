@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:soapui-project id="05e2b157-8592-475d-8287-388d9681e3cb" activeEnvironment="Default" name="SafoDrive" resourceRoot="" soapui-version="5.10.0" xmlns:con="http://eviware.com/soapui/config"><con:settings/><con:interface xsi:type="con:WsdlInterface" id="96cb4198-8716-4e95-b500-01520e29fc6a" wsaVersion="NONE" name="SafoDriveNotary" type="wsdl" bindingName="{safodrive.soap.notary}SafoDriveNotary" soapVersion="1_1" anonymous="optional" definition="http://localhost:8003/?wsdl" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:settings/><con:definitionCache type="TEXT" rootPart="http://localhost:8003/?wsdl"><con:part><con:url>http://localhost:8003/?wsdl</con:url><con:content><![CDATA[<wsdl:definitions targetNamespace="safodrive.soap.notary" name="SafoDriveNotary" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:plink="http://schemas.xmlsoap.org/ws/2003/05/partner-link/" xmlns:wsdlsoap11="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:wsdlsoap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:soap11enc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soap11env="http://schemas.xmlsoap.org/soap/envelope/" xmlns:soap12env="http://www.w3.org/2003/05/soap-envelope" xmlns:soap12enc="http://www.w3.org/2003/05/soap-encoding" xmlns:wsa="http://schemas.xmlsoap.org/ws/2003/03/addressing" xmlns:xop="http://www.w3.org/2004/08/xop/include" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:tns="safodrive.soap.notary">
+  <wsdl:types>
+    <xs:schema targetNamespace="safodrive.soap.notary" elementFormDefault="qualified">
+      <xs:complexType name="CertificadoAutenticacaoResponse">
+        <xs:sequence>
+          <xs:element name="protocolo" type="xs:string" minOccurs="0" nillable="true"/>
+          <xs:element name="arquivo_id" type="xs:integer" minOccurs="0" nillable="true"/>
+          <xs:element name="nome_arquivo" type="xs:string" minOccurs="0" nillable="true"/>
+          <xs:element name="tamanho_bytes" type="xs:integer" minOccurs="0" nillable="true"/>
+          <xs:element name="hash_sha256" type="xs:string" minOccurs="0" nillable="true"/>
+          <xs:element name="timestamp_utc" type="xs:string" minOccurs="0" nillable="true"/>
+          <xs:element name="status" type="xs:string" minOccurs="0" nillable="true"/>
+          <xs:element name="mensagem" type="xs:string" minOccurs="0" nillable="true"/>
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="ValidacaoIntegridadeResponse">
+        <xs:sequence>
+          <xs:element name="arquivo_id" type="xs:integer" minOccurs="0" nillable="true"/>
+          <xs:element name="protocolo" type="xs:string" minOccurs="0" nillable="true"/>
+          <xs:element name="autentico" type="xs:boolean" minOccurs="0" nillable="true"/>
+          <xs:element name="hash_oficial" type="xs:string" minOccurs="0" nillable="true"/>
+          <xs:element name="status" type="xs:string" minOccurs="0" nillable="true"/>
+          <xs:element name="mensagem" type="xs:string" minOccurs="0" nillable="true"/>
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="emitir_autenticacao_arquivo">
+        <xs:sequence>
+          <xs:element name="arquivo_id" type="xs:integer" minOccurs="0" nillable="true"/>
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="validar_integridade_arquivo">
+        <xs:sequence>
+          <xs:element name="arquivo_id" type="xs:integer" minOccurs="0" nillable="true"/>
+          <xs:element name="hash_conferencia" type="xs:string" minOccurs="0" nillable="true"/>
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="emitir_autenticacao_arquivoResponse">
+        <xs:sequence>
+          <xs:element name="emitir_autenticacao_arquivoResult" type="tns:CertificadoAutenticacaoResponse" minOccurs="0" nillable="true"/>
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="validar_integridade_arquivoResponse">
+        <xs:sequence>
+          <xs:element name="validar_integridade_arquivoResult" type="tns:ValidacaoIntegridadeResponse" minOccurs="0" nillable="true"/>
+        </xs:sequence>
+      </xs:complexType>
+      <xs:element name="CertificadoAutenticacaoResponse" type="tns:CertificadoAutenticacaoResponse"/>
+      <xs:element name="ValidacaoIntegridadeResponse" type="tns:ValidacaoIntegridadeResponse"/>
+      <xs:element name="emitir_autenticacao_arquivo" type="tns:emitir_autenticacao_arquivo"/>
+      <xs:element name="validar_integridade_arquivo" type="tns:validar_integridade_arquivo"/>
+      <xs:element name="emitir_autenticacao_arquivoResponse" type="tns:emitir_autenticacao_arquivoResponse"/>
+      <xs:element name="validar_integridade_arquivoResponse" type="tns:validar_integridade_arquivoResponse"/>
+    </xs:schema>
+  </wsdl:types>
+  <wsdl:message name="emitir_autenticacao_arquivo">
+    <wsdl:part name="emitir_autenticacao_arquivo" element="tns:emitir_autenticacao_arquivo"/>
+  </wsdl:message>
+  <wsdl:message name="emitir_autenticacao_arquivoResponse">
+    <wsdl:part name="emitir_autenticacao_arquivoResponse" element="tns:emitir_autenticacao_arquivoResponse"/>
+  </wsdl:message>
+  <wsdl:message name="validar_integridade_arquivo">
+    <wsdl:part name="validar_integridade_arquivo" element="tns:validar_integridade_arquivo"/>
+  </wsdl:message>
+  <wsdl:message name="validar_integridade_arquivoResponse">
+    <wsdl:part name="validar_integridade_arquivoResponse" element="tns:validar_integridade_arquivoResponse"/>
+  </wsdl:message>
+  <wsdl:service name="FileShareNotaryService">
+    <wsdl:port name="SafoDriveNotary" binding="tns:SafoDriveNotary">
+      <wsdlsoap11:address location="http://localhost:8003/"/>
+    </wsdl:port>
+  </wsdl:service>
+  <wsdl:portType name="SafoDriveNotary">
+    <wsdl:operation name="emitir_autenticacao_arquivo" parameterOrder="emitir_autenticacao_arquivo">
+      <wsdl:input name="emitir_autenticacao_arquivo" message="tns:emitir_autenticacao_arquivo"/>
+      <wsdl:output name="emitir_autenticacao_arquivoResponse" message="tns:emitir_autenticacao_arquivoResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="validar_integridade_arquivo" parameterOrder="validar_integridade_arquivo">
+      <wsdl:documentation>Operação 2: A Autoridade SOAP audita a integridade do arquivo.
+Confere se o arquivo no disco foi alterado ou compara contra um hash informado.
+Dispara SOAP Fault caso seja detectada qualquer divergência de integridade.</wsdl:documentation>
+      <wsdl:input name="validar_integridade_arquivo" message="tns:validar_integridade_arquivo"/>
+      <wsdl:output name="validar_integridade_arquivoResponse" message="tns:validar_integridade_arquivoResponse"/>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="SafoDriveNotary" type="tns:SafoDriveNotary">
+    <wsdlsoap11:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="emitir_autenticacao_arquivo">
+      <wsdlsoap11:operation soapAction="emitir_autenticacao_arquivo" style="document"/>
+      <wsdl:input name="emitir_autenticacao_arquivo">
+        <wsdlsoap11:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="emitir_autenticacao_arquivoResponse">
+        <wsdlsoap11:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="validar_integridade_arquivo">
+      <wsdlsoap11:operation soapAction="validar_integridade_arquivo" style="document"/>
+      <wsdl:input name="validar_integridade_arquivo">
+        <wsdlsoap11:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="validar_integridade_arquivoResponse">
+        <wsdlsoap11:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+</wsdl:definitions>]]></con:content><con:type>http://schemas.xmlsoap.org/wsdl/</con:type></con:part></con:definitionCache><con:endpoints><con:endpoint>http://localhost:8003/</con:endpoint></con:endpoints><con:operation id="3249779c-6f9b-483b-be80-5d1c6f97526a" isOneWay="false" action="emitir_autenticacao_arquivo" name="emitir_autenticacao_arquivo" bindingOperationName="emitir_autenticacao_arquivo" type="Request-Response" outputName="emitir_autenticacao_arquivoResponse" inputName="emitir_autenticacao_arquivo" receivesAttachments="false" sendsAttachments="false" anonymous="optional"><con:settings/><con:call id="23c8e7a9-22b1-4e5e-83d3-1412c41f07a2" name="Request 1"><con:settings/><con:encoding>UTF-8</con:encoding><con:endpoint>http://localhost:8003/</con:endpoint><con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:saf="safodrive.soap.notary">\r
+   <soapenv:Header/>\r
+   <soapenv:Body>\r
+      <saf:emitir_autenticacao_arquivo>\r
+         <!--Optional:-->\r
+         <saf:arquivo_id>?</saf:arquivo_id>\r
+      </saf:emitir_autenticacao_arquivo>\r
+   </soapenv:Body>\r
+</soapenv:Envelope>]]></con:request><con:wsaConfig mustUnderstand="NONE" version="200508" action="emitir_autenticacao_arquivo"/></con:call></con:operation><con:operation id="8d169287-f5cc-4ab2-80a1-03074de64f9c" isOneWay="false" action="validar_integridade_arquivo" name="validar_integridade_arquivo" bindingOperationName="validar_integridade_arquivo" type="Request-Response" outputName="validar_integridade_arquivoResponse" inputName="validar_integridade_arquivo" receivesAttachments="false" sendsAttachments="false" anonymous="optional"><con:settings/><con:call id="fbbe80e4-7128-4ce2-8bda-3b9b0e2b030c" name="Request 1"><con:settings/><con:encoding>UTF-8</con:encoding><con:endpoint>http://localhost:8003/</con:endpoint><con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:saf="safodrive.soap.notary">\r
+   <soapenv:Header/>\r
+   <soapenv:Body>\r
+      <saf:validar_integridade_arquivo>\r
+         <!--Optional:-->\r
+         <saf:arquivo_id>?</saf:arquivo_id>\r
+         <!--Optional:-->\r
+         <saf:hash_conferencia>?</saf:hash_conferencia>\r
+      </saf:validar_integridade_arquivo>\r
+   </soapenv:Body>\r
+</soapenv:Envelope>]]></con:request><con:wsaConfig mustUnderstand="NONE" version="200508" action="validar_integridade_arquivo"/></con:call></con:operation></con:interface><con:properties/><con:wssContainer/><con:oAuth2ProfileContainer/><con:oAuth1ProfileContainer/></con:soapui-project>
