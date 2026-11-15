@@ -14,6 +14,9 @@ class FileSerializer(serializers.ModelSerializer):
             'size_bytes',
             'size_mb',
             'content_type',
+            'hash_sha256',
+            'protocolo_soap',
+            'autenticado_em',
             'created_at',
             'updated_at'
         ]

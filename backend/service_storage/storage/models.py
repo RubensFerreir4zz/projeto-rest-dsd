@@ -7,6 +7,9 @@ class File(models.Model):
     original_name = models.CharField(max_length=255)
     size_bytes = models.BigIntegerField()
     content_type = models.CharField(max_length=100, blank=True)
+    hash_sha256 = models.CharField(max_length=64, blank=True, default='')
+    protocolo_soap = models.CharField(max_length=50, blank=True, default='')
+    autenticado_em = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
