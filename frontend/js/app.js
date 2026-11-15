@@ -1,8 +1,3 @@
-/**
- * Aplicação Principal do Cliente Web (Front-end)
- * Controla a interface, os eventos de upload, visualização de mídia e modais HATEOAS.
- */
-
 document.addEventListener('DOMContentLoaded', () => {
   // Referências DOM
   const authSection = document.getElementById('auth-section');
@@ -223,7 +218,10 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="file-icon-box">
             ${fileIconSvg}
           </div>
-          <span class="file-type-pill">${ext}</span>
+          <div style="display:flex; gap:0.25rem;">
+            ${file.protocolo_soap ? `<span class="file-type-pill" style="color:var(--accent-primary);" title="Protocolo: ${file.protocolo_soap}">CERTIFICADO</span>` : ''}
+            <span class="file-type-pill">${ext}</span>
+          </div>
         </div>
 
         <div class="file-name-text" title="${file.original_name}">${file.original_name}</div>
@@ -250,10 +248,16 @@ document.addEventListener('DOMContentLoaded', () => {
           </button>
         </div>
 
-        <button class="btn btn-ghost btn-inspect-hateoas" style="margin-top:0.45rem; width:100%; font-size:0.725rem;" title="Inspecionar hiperlinks HATEOAS">
-          <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-          <span>HATEOAS JSON</span>
-        </button>
+        <div style="display:flex; gap:0.35rem; margin-top:0.45rem;">
+          <button class="btn btn-ghost btn-inspect-hateoas" style="flex:1; font-size:0.7rem;" title="Inspecionar hiperlinks HATEOAS">
+            <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            <span>HATEOAS</span>
+          </button>
+          <button class="btn btn-ghost btn-soap-modal" style="flex:1; font-size:0.7rem;" title="Consultar certificado de autenticidade e integridade">
+            <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>Certificado</span>
+          </button>
+        </div>
       </div>
     `;
 
@@ -289,6 +293,12 @@ document.addEventListener('DOMContentLoaded', () => {
       openJsonModal(`HATEOAS: ${file.original_name}`, file);
     });
 
+    // Evento de Cartório SOAP
+    const btnSoap = card.querySelector('.btn-soap-modal');
+    btnSoap.addEventListener('click', () => {
+      openSoapModal(file);
+    });
+
     return card;
   }
 
@@ -302,7 +312,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const res = await Api.uploadFile(file);
-      showToast(`Arquivo "${file.name}" enviado com sucesso!`, 'success');
+      showToast(`Upload de "${file.name}" concluído!`, 'success');
+
+      // Aciona o serviço notarial via SOAP para emitir o certificado de autenticidade oficial
+      const savedId = (res && res.id) || (res.file && res.file.id);
+      if (savedId) {
+        uploadProgress.textContent = `Emitindo certificado de autenticidade...`;
+        try {
+          const cert = await SoapClient.emitirAutenticacao(savedId);
+          showToast(`Certificado emitido: ${cert.protocolo}`, 'info');
+        } catch (soapErr) {
+          console.warn('Erro na emissão automática do certificado:', soapErr);
+          showToast(`Arquivo salvo, mas falha ao registrar certificado: ${soapErr.message}`, 'warning');
+        }
+      }
+
       loadUserData();
       loadFiles();
     } catch (err) {
@@ -402,20 +426,29 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   modalCloseBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      jsonModal.classList.remove('active');
-      previewModal.classList.remove('active');
+    btn.addEventListener('click', (e) => {
+      const modal = e.target.closest('.modal-overlay');
+      if (modal) {
+        modal.classList.remove('active');
+      }
       previewContainer.innerHTML = '';
     });
   });
 
-  [jsonModal, previewModal].forEach(modal => {
+  document.querySelectorAll('.modal-overlay').forEach(modal => {
     modal.addEventListener('click', (e) => {
       if (e.target === modal) {
         modal.classList.remove('active');
         previewContainer.innerHTML = '';
       }
     });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-overlay.active').forEach(modal => modal.classList.remove('active'));
+      previewContainer.innerHTML = '';
+    }
   });
 
   btnInspectQuotaHateoas.addEventListener('click', () => {
@@ -509,6 +542,130 @@ document.addEventListener('DOMContentLoaded', () => {
         loadUserData();
         loadFiles();
       }
+    }
+  });
+
+  // --- Controle do Modal de Certificado e Integridade (SOAP) ---
+  const soapModal = document.getElementById('soap-modal');
+  const soapDisplayFilename = document.getElementById('soap-display-filename');
+  const soapDisplayProtocolo = document.getElementById('soap-display-protocolo');
+  const soapDisplayHash = document.getElementById('soap-display-hash');
+  const soapDisplayData = document.getElementById('soap-display-data');
+  const soapDisplayStatus = document.getElementById('soap-display-status');
+
+  const soapBtnAuditarSucesso = document.getElementById('soap-btn-auditar-sucesso');
+  const soapBtnAuditarFalha = document.getElementById('soap-btn-auditar-falha');
+  const soapBtnEmitirAgora = document.getElementById('soap-btn-emitir-agora');
+
+  const soapOutputContainer = document.getElementById('soap-output-container');
+  const soapStatusAlert = document.getElementById('soap-status-alert');
+  const soapXmlViewer = document.getElementById('soap-xml-viewer');
+
+  let currentSoapFile = null;
+
+  function openSoapModal(file) {
+    currentSoapFile = file;
+    soapDisplayFilename.textContent = file.original_name;
+    soapDisplayProtocolo.textContent = file.protocolo_soap || 'Não emitido';
+    soapDisplayHash.textContent = file.hash_sha256 || 'Aguardando registro notarial';
+    soapDisplayData.textContent = file.autenticado_em ? new Date(file.autenticado_em).toLocaleString('pt-BR') : (file.created_at ? new Date(file.created_at).toLocaleString('pt-BR') : '-');
+
+    if (file.protocolo_soap) {
+      soapDisplayStatus.textContent = 'REGISTRADO';
+      soapDisplayStatus.style.color = '#10b981';
+      soapBtnEmitirAgora.style.display = 'none';
+      soapBtnAuditarSucesso.style.display = 'block';
+      soapBtnAuditarFalha.style.display = 'block';
+    } else {
+      soapDisplayStatus.textContent = 'PENDENTE';
+      soapDisplayStatus.style.color = '#f59e0b';
+      soapBtnEmitirAgora.style.display = 'block';
+      soapBtnAuditarSucesso.style.display = 'none';
+      soapBtnAuditarFalha.style.display = 'none';
+    }
+
+    soapOutputContainer.style.display = 'none';
+    soapModal.classList.add('active');
+  }
+
+  soapBtnEmitirAgora.addEventListener('click', async () => {
+    if (!currentSoapFile) return;
+    soapBtnEmitirAgora.disabled = true;
+    soapBtnEmitirAgora.textContent = 'Emitindo Certificado...';
+
+    try {
+      const resp = await SoapClient.emitirAutenticacao(currentSoapFile.id);
+      currentSoapFile.protocolo_soap = resp.protocolo;
+      currentSoapFile.hash_sha256 = resp.hashSha256;
+      currentSoapFile.autenticado_em = resp.timestampUtc;
+
+      openSoapModal(currentSoapFile);
+      soapStatusAlert.style.backgroundColor = 'rgba(16, 185, 129, 0.15)';
+      soapStatusAlert.style.color = '#10b981';
+      soapStatusAlert.innerHTML = `<strong>Certificado Emitido com Sucesso:</strong> Protocolo <code>${resp.protocolo}</code>`;
+      soapXmlViewer.textContent = resp.rawResponseXml;
+      soapOutputContainer.style.display = 'block';
+
+      showToast('Certificado emitido com sucesso!', 'success');
+      loadFiles();
+    } catch (err) {
+      soapStatusAlert.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
+      soapStatusAlert.style.color = '#ef4444';
+      soapStatusAlert.innerHTML = `<strong>Falha na Emissão (${err.faultCode || 'Fault'}):</strong> ${err.message}`;
+      soapXmlViewer.textContent = err.rawXml || err.message;
+      soapOutputContainer.style.display = 'block';
+      showToast('Falha na emissão do certificado: ' + err.message, 'error');
+    } finally {
+      soapBtnEmitirAgora.disabled = false;
+      soapBtnEmitirAgora.textContent = 'Emitir Certificado de Autenticidade';
+    }
+  });
+
+  soapBtnAuditarSucesso.addEventListener('click', async () => {
+    if (!currentSoapFile) return;
+    soapBtnAuditarSucesso.disabled = true;
+    soapBtnAuditarSucesso.textContent = 'Verificando Integridade...';
+
+    try {
+      const resp = await SoapClient.validarIntegridade(currentSoapFile.id);
+      soapStatusAlert.style.backgroundColor = 'rgba(16, 185, 129, 0.15)';
+      soapStatusAlert.style.color = '#10b981';
+      soapStatusAlert.innerHTML = `<strong>Verificação Concluída:</strong> ${resp.mensagem}`;
+      soapXmlViewer.textContent = resp.rawResponseXml;
+      soapOutputContainer.style.display = 'block';
+      showToast('Integridade confirmada com sucesso!', 'success');
+    } catch (err) {
+      soapStatusAlert.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
+      soapStatusAlert.style.color = '#ef4444';
+      soapStatusAlert.innerHTML = `<strong>Alerta de Integridade (${err.faultCode || 'Fault'}):</strong> ${err.message}`;
+      soapXmlViewer.textContent = err.rawXml || err.message;
+      soapOutputContainer.style.display = 'block';
+      showToast('Falha de integridade: ' + err.message, 'error');
+    } finally {
+      soapBtnAuditarSucesso.disabled = false;
+      soapBtnAuditarSucesso.textContent = 'Verificar Integridade';
+    }
+  });
+
+  soapBtnAuditarFalha.addEventListener('click', async () => {
+    if (!currentSoapFile) return;
+    soapBtnAuditarFalha.disabled = true;
+    soapBtnAuditarFalha.textContent = 'Executando Teste de Falha...';
+
+    try {
+      // Passa um hash sabidamente falso para demonstrar a detecção de adulteração via SOAP Fault
+      await SoapClient.validarIntegridade(currentSoapFile.id, 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
+      showToast('Atenção: A chamada deveria ter falhado com SOAP Fault!', 'warning');
+    } catch (err) {
+      soapStatusAlert.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
+      soapStatusAlert.style.color = '#ef4444';
+      soapStatusAlert.innerHTML = `<strong>Falha de Integridade Detectada (${err.faultCode || 'Fault'}):</strong> ${err.message}`;
+      soapXmlViewer.textContent = err.rawXml || err.message;
+      soapOutputContainer.style.display = 'block';
+      showToast('Violação detectada via SOAP Fault!', 'error');
+    } finally {
+      soapBtnAuditarFalha.disabled = false;
+      soapBtnAuditarFalha.textContent = 'Simular Adulteração (Teste de Falha)';
     }
   });
 
