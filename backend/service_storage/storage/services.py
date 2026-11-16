@@ -1,3 +1,5 @@
+import os
+from django.core.files.base import ContentFile
 from storage.models import File
 from rest_framework.exceptions import NotFound
 
@@ -35,3 +37,24 @@ class StorageService:
             "user_id": user_id,
             "released_bytes": size_bytes
         }
+
+    @staticmethod
+    def clone_file(source_file_id: int, target_user_id: int) -> File:
+        source = StorageService.get_file_by_id(source_file_id)
+        if not source.file or not os.path.exists(source.file.path):
+            raise NotFound({"detail": "Arquivo físico não encontrado para clonagem."})
+
+        with open(source.file.path, 'rb') as f:
+            cloned_content = ContentFile(f.read(), name=source.original_name)
+
+        cloned_file = File.objects.create(
+            user_id=target_user_id,
+            file=cloned_content,
+            original_name=source.original_name,
+            size_bytes=source.size_bytes,
+            content_type=source.content_type,
+            hash_sha256=source.hash_sha256,
+            protocolo_soap=source.protocolo_soap,
+            autenticado_em=source.autenticado_em
+        )
+        return cloned_file

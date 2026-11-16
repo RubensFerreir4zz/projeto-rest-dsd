@@ -23,6 +23,11 @@ class HateoasBuilder:
                 "href": f"{base_url}/{file_id}/",
                 "method": "DELETE",
                 "description": "Excluir permanentemente este arquivo e liberar cota"
+            },
+            "copy_to_me": {
+                "href": f"{base_url}/{file_id}/copy_to_me/",
+                "method": "POST",
+                "description": "Clonar este arquivo compartilhado para o seu próprio Drive"
             }
         }
 

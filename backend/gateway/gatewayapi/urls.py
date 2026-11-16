@@ -7,6 +7,7 @@ from gatewayapi.views import (
     FileDetailDeleteView,
     FileDownloadProxyView,
     FilePreviewProxyView,
+    FileCopyToMeView,
 )
 
 urlpatterns = [
@@ -17,4 +18,5 @@ urlpatterns = [
     path('drive/files/<int:pk>/', FileDetailDeleteView.as_view(), name='gateway-file-detail'),
     path('drive/files/<int:pk>/download/', FileDownloadProxyView.as_view(), name='gateway-file-download'),
     path('drive/files/<int:pk>/preview/', FilePreviewProxyView.as_view(), name='gateway-file-preview'),
+    path('drive/files/<int:pk>/copy_to_me/', FileCopyToMeView.as_view(), name='gateway-file-copy-to-me'),
 ]

@@ -5,6 +5,7 @@ from storage.views import (
     FileDetailView,
     FileDownloadView,
     FilePreviewView,
+    FileCloneView,
 )
 
 urlpatterns = [
@@ -13,4 +14,5 @@ urlpatterns = [
     path('<int:pk>/', FileDetailView.as_view(), name='file-detail'),
     path('<int:pk>/download/', FileDownloadView.as_view(), name='file-download'),
     path('<int:pk>/preview/', FilePreviewView.as_view(), name='file-preview'),
+    path('<int:pk>/clone/', FileCloneView.as_view(), name='file-clone'),
 ]

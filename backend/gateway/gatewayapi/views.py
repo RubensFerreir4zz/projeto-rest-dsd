@@ -29,7 +29,6 @@ class RegisterView(APIView):
         serializer = RegisterRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # Chama a API de Contas (8001)
         resp = AccountsServiceClient.register(
             username=serializer.validated_data["username"],
             email=serializer.validated_data["email"],
@@ -224,3 +223,43 @@ class FilePreviewProxyView(APIView):
         if "Content-Disposition" in resp.headers:
             response["Content-Disposition"] = resp.headers["Content-Disposition"]
         return response
+
+
+class FileCopyToMeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="Copiar arquivo compartilhado para o próprio Drive (com checagem de cota)",
+        tags=["Arquivos"],
+        responses={201: OpenApiResponse(description="Arquivo copiado com sucesso e enriquecido com HATEOAS")}
+    )
+    def post(self, request, pk):
+        source_resp = StorageServiceClient.get_file(pk)
+        if source_resp.status_code != 200:
+            return Response(source_resp.json(), status=source_resp.status_code)
+
+        source_data = source_resp.json()
+        file_size = source_data.get("size_bytes", 0)
+
+        check_resp = AccountsServiceClient.check_storage(request.user.id, file_size)
+        if check_resp.status_code != 200:
+            return Response(check_resp.json(), status=check_resp.status_code)
+
+        check_data = check_resp.json()
+        if not check_data.get("available", False):
+            return Response({
+                "detail": "Cota de armazenamento insuficiente para salvar este arquivo no seu Drive.",
+                "current_used": check_data.get("current_used"),
+                "storage_limit": check_data.get("storage_limit"),
+                "file_size": file_size
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        clone_resp = StorageServiceClient.clone_file(pk, request.user.id)
+        if clone_resp.status_code != 201:
+            return Response(clone_resp.json(), status=clone_resp.status_code)
+
+        cloned_data = clone_resp.json()
+        AccountsServiceClient.add_storage(request.user.id, file_size)
+
+        enriched = HateoasBuilder.enrich_file(cloned_data, request)
+        return Response(enriched, status=status.HTTP_201_CREATED)

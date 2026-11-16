@@ -124,3 +124,11 @@ class StorageServiceClient:
             return response
         except requests.RequestException:
             raise ServiceUnavailable("Não foi possível conectar ao serviço de arquivos (8002).")
+
+    @classmethod
+    def clone_file(cls, file_id, user_id):
+        try:
+            response = requests.post(f"{cls.BASE_URL}/{file_id}/clone/", json={"user_id": user_id}, timeout=15)
+            return response
+        except requests.RequestException:
+            raise ServiceUnavailable("Não foi possível conectar ao serviço de arquivos (8002).")

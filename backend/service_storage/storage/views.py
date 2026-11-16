@@ -65,3 +65,13 @@ class FilePreviewView(APIView):
         response = FileResponse(open(file_obj.file.path, 'rb'), content_type=file_obj.content_type)
         response['Content-Disposition'] = f'inline; filename="{file_obj.original_name}"'
         return response
+
+
+class FileCloneView(APIView):
+    def post(self, request, pk):
+        target_user_id = request.data.get('user_id')
+        if not target_user_id:
+            return Response({"detail": "user_id é obrigatório para clonagem."}, status=status.HTTP_400_BAD_REQUEST)
+
+        cloned_file = StorageService.clone_file(source_file_id=pk, target_user_id=int(target_user_id))
+        return Response(FileSerializer(cloned_file).data, status=status.HTTP_201_CREATED)
