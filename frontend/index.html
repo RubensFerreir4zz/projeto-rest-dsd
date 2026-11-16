@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=2">
 </head>
 <body>
 
@@ -324,9 +324,75 @@
   <!-- Container de Toasts -->
   <div id="toast-container" class="toast-container"></div>
 
+  <div id="chat-drawer" style="display: none;">
+    <div id="chat-header-bar" class="chat-header-bar">
+      <div class="chat-header-left">
+        <span id="chat-status-dot" class="status-dot"></span>
+        <span id="chat-header-title" class="chat-title-text">Mensagens da Equipe</span>
+        <span id="chat-unread-badge" class="chat-unread-badge">0</span>
+      </div>
+      <div class="chat-header-right">
+        <svg class="icon icon-sm chat-toggle-icon" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
+      </div>
+    </div>
+
+    <div id="chat-drawer-body" class="chat-drawer-body">
+      <div class="chat-tabs">
+        <button id="chat-tab-global" class="chat-tab-btn active" title="Canal Geral da Equipe (Broadcast)">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <span># Geral</span>
+        </button>
+        <button id="chat-tab-users" class="chat-tab-btn">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span id="chat-online-count-label">Pessoas (0)</span>
+        </button>
+      </div>
+
+      <div id="chat-dm-bar" class="chat-dm-bar">
+        <span>Conversando com: <strong id="chat-dm-target-name"></strong></span>
+        <button id="chat-dm-back-btn" class="chat-dm-back-btn">&larr; Voltar ao Geral</button>
+      </div>
+
+      <div id="chat-messages-container" class="chat-messages-scroll">
+        <div style="font-size:0.75rem; color:var(--text-tertiary); text-align:center; margin-top:2rem;">
+          Conectando ao chat da equipe...
+        </div>
+      </div>
+
+      <div id="chat-users-container" class="chat-users-scroll"></div>
+
+      <div class="chat-drawer-footer">
+        <button id="chat-btn-attach" class="chat-btn-action" title="Compartilhar arquivo do Drive no chat">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+        </button>
+        <input type="text" id="chat-input-text" class="chat-input-text" placeholder="Digite uma mensagem..." autocomplete="off">
+        <button id="chat-btn-send" class="chat-btn-action chat-btn-send" title="Enviar mensagem">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="chat-share-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width: 480px;">
+      <div class="modal-top">
+        <h3 class="modal-title">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span>Compartilhar Arquivo no Chat</span>
+        </h3>
+        <button class="btn btn-ghost btn-icon-only modal-close">&times;</button>
+      </div>
+      <p style="font-size: 0.775rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+        Selecione um arquivo do seu Drive para enviar em tempo real na conversa:
+      </p>
+      <div id="chat-share-files-list" style="max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.75rem;"></div>
+    </div>
+  </div>
+
   <!-- Scripts -->
   <script src="js/api.js"></script>
   <script src="js/soap.js"></script>
+  <script src="js/chat.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

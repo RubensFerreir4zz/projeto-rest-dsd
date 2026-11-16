@@ -33,7 +33,6 @@ const SoapClient = {
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(responseText, "text/xml");
 
-    // Verifica se houve retorno de SOAP Fault
     const fault =
       xmlDoc.querySelector("Fault") ||
       xmlDoc.querySelector("soap11env\\:Fault") ||

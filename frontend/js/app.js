@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // Referências DOM
   const authSection = document.getElementById('auth-section');
   const appSection = document.getElementById('app-section');
   const userNavInfo = document.getElementById('user-nav-info');
@@ -7,30 +6,25 @@ document.addEventListener('DOMContentLoaded', () => {
   const userPlanDisplay = document.getElementById('nav-plan');
   const logoutBtn = document.getElementById('btn-logout');
 
-  // Abas de Auth
   const tabLogin = document.getElementById('tab-login');
   const tabRegister = document.getElementById('tab-register');
   const formLogin = document.getElementById('form-login');
   const formRegister = document.getElementById('form-register');
 
-  // Painel de Cota
   const quotaUsedEl = document.getElementById('quota-used');
   const quotaTotalEl = document.getElementById('quota-total');
   const quotaPercentEl = document.getElementById('quota-percent');
   const quotaBarFill = document.getElementById('quota-bar-fill');
   const btnInspectQuotaHateoas = document.getElementById('btn-inspect-quota');
 
-  // Upload
   const dropzone = document.getElementById('dropzone');
   const fileInput = document.getElementById('file-input');
   const uploadProgress = document.getElementById('upload-progress');
 
-  // Lista de Arquivos
   const filesContainer = document.getElementById('files-container');
   const searchInput = document.getElementById('search-files');
   const btnRefresh = document.getElementById('btn-refresh');
 
-  // Modais
   const jsonModal = document.getElementById('json-modal');
   const jsonViewer = document.getElementById('json-viewer');
   const modalCloseBtns = document.querySelectorAll('.modal-close');
@@ -39,14 +33,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const previewContainer = document.getElementById('preview-container');
   const previewTitle = document.getElementById('preview-title');
 
-  // Configuração do Gateway
   const btnConfigServer = document.getElementById('btn-config-server');
   const currentServerUrl = document.getElementById('current-server-url');
 
   let currentFiles = [];
   let currentUserProfile = null;
-
-  // --- Inicialização ---
 
   function init() {
     updateServerBadge();
@@ -64,12 +55,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // --- Telas (Auth vs Dashboard) ---
-
   function showAuth() {
     authSection.style.display = 'flex';
     appSection.style.display = 'none';
     userNavInfo.style.display = 'none';
+    const chatDrawer = document.getElementById('chat-drawer');
+    if (chatDrawer) chatDrawer.style.display = 'none';
+    ChatClient.disconnect();
   }
 
   function showDashboard() {
@@ -79,8 +71,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadUserData();
     loadFiles();
   }
-
-  // --- Toasts de Notificação ---
 
   function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
@@ -96,17 +86,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 4000);
   }
 
-  // --- Carregamento de Dados ---
-
   async function loadUserData() {
     try {
       const user = await Api.getProfile();
       currentUserProfile = user;
+      initChat(user);
 
       usernameDisplay.textContent = user.username;
       userPlanDisplay.textContent = user.plan || 'Free';
 
-      // Atualiza a Cota
       const usedMb = (user.storage_used / (1024 * 1024)).toFixed(2);
       const totalMb = (user.storage_limit / (1024 * 1024)).toFixed(1);
       const percent = Math.min(100, Math.round((user.storage_used / user.storage_limit) * 100));
@@ -136,8 +124,6 @@ document.addEventListener('DOMContentLoaded', () => {
       filesContainer.innerHTML = `<div class="empty-state"><p style="color:var(--danger)">Erro ao carregar arquivos: ${err.message}</p></div>`;
     }
   }
-
-  // --- Renderização de Arquivos ---
 
   function renderFiles(files) {
     if (!files || files.length === 0) {
@@ -169,7 +155,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const isPdf = file.content_type && file.content_type.includes('pdf');
     const isVideo = file.content_type && file.content_type.startsWith('video/');
 
-    // Pega a extensão do arquivo (ex: PDF, PNG, MP3)
     const ext = file.original_name.includes('.') 
       ? file.original_name.split('.').pop().toUpperCase() 
       : 'ARQ';
@@ -243,6 +228,10 @@ document.addEventListener('DOMContentLoaded', () => {
             <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             <span>Baixar</span>
           </a>
+          <button class="btn btn-ghost btn-share-chat" title="Compartilhar no Chat da Equipe">
+            <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>Chat</span>
+          </button>
           <button class="btn btn-danger-ghost btn-delete" title="Excluir Arquivo">
             <svg class="icon icon-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           </button>
@@ -261,13 +250,11 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
 
-    // Evento de Visualização (Preview)
     const btnPreview = card.querySelector('.btn-preview');
     if (btnPreview) {
       btnPreview.addEventListener('click', () => openPreviewModal(file));
     }
 
-    // Evento de Exclusão (executa diretamente a ação do HATEOAS _links.delete)
     const btnDelete = card.querySelector('.btn-delete');
     btnDelete.addEventListener('click', async () => {
       if (!confirm(`Deseja excluir "${file.original_name}"? A cota será recalculada.`)) return;
@@ -275,7 +262,6 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         btnDelete.disabled = true;
         btnDelete.textContent = '...';
-        // Execução HATEOAS pura!
         await Api.executeHateoas(file._links.delete);
         showToast('Arquivo excluído com sucesso!', 'success');
         loadUserData();
@@ -287,22 +273,25 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Evento de Inspecionar HATEOAS do Arquivo
     const btnHateoas = card.querySelector('.btn-inspect-hateoas');
     btnHateoas.addEventListener('click', () => {
       openJsonModal(`HATEOAS: ${file.original_name}`, file);
     });
 
-    // Evento de Cartório SOAP
     const btnSoap = card.querySelector('.btn-soap-modal');
     btnSoap.addEventListener('click', () => {
       openSoapModal(file);
     });
 
+    const btnShareChat = card.querySelector('.btn-share-chat');
+    if (btnShareChat) {
+      btnShareChat.addEventListener('click', () => {
+        shareFileInChat(file);
+      });
+    }
+
     return card;
   }
-
-  // --- Upload de Arquivos ---
 
   async function handleFileUpload(file) {
     if (!file) return;
@@ -314,7 +303,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await Api.uploadFile(file);
       showToast(`Upload de "${file.name}" concluído!`, 'success');
 
-      // Aciona o serviço notarial via SOAP para emitir o certificado de autenticidade oficial
       const savedId = (res && res.id) || (res.file && res.file.id);
       if (savedId) {
         uploadProgress.textContent = `Emitindo certificado de autenticidade...`;
@@ -368,8 +356,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // --- Busca / Filtro ---
-
   searchInput.addEventListener('input', (e) => {
     const query = e.target.value.toLowerCase().trim();
     if (!query) {
@@ -385,8 +371,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadFiles();
     showToast('Atualizado!', 'info');
   });
-
-  // --- Modais ---
 
   function openJsonModal(title, jsonObj) {
     document.getElementById('json-modal-title').textContent = title;
@@ -456,8 +440,6 @@ document.addEventListener('DOMContentLoaded', () => {
       openJsonModal('HATEOAS: Perfil & Cota do Usuário', currentUserProfile);
     }
   });
-
-  // --- Autenticação (Login e Cadastro) ---
 
   tabLogin.addEventListener('click', () => {
     tabLogin.classList.add('active');
@@ -530,7 +512,6 @@ document.addEventListener('DOMContentLoaded', () => {
     showAuth();
   });
 
-  // Configuração do IP do Servidor
   btnConfigServer.addEventListener('click', () => {
     const current = Api.getBaseUrl();
     const newUrl = prompt('Digite o endereço do API Gateway (Porta 8000):', current);
@@ -545,7 +526,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // --- Controle do Modal de Certificado e Integridade (SOAP) ---
   const soapModal = document.getElementById('soap-modal');
   const soapDisplayFilename = document.getElementById('soap-display-filename');
   const soapDisplayProtocolo = document.getElementById('soap-display-protocolo');
@@ -653,7 +633,6 @@ document.addEventListener('DOMContentLoaded', () => {
     soapBtnAuditarFalha.textContent = 'Executando Teste de Falha...';
 
     try {
-      // Passa um hash sabidamente falso para demonstrar a detecção de adulteração via SOAP Fault
       await SoapClient.validarIntegridade(currentSoapFile.id, 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
       showToast('Atenção: A chamada deveria ter falhado com SOAP Fault!', 'warning');
     } catch (err) {
@@ -669,6 +648,421 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Iniciar
+  const chatDrawer = document.getElementById('chat-drawer');
+  const chatHeaderBar = document.getElementById('chat-header-bar');
+  const chatStatusDot = document.getElementById('chat-status-dot');
+  const chatHeaderTitle = document.getElementById('chat-header-title');
+  const chatUnreadBadge = document.getElementById('chat-unread-badge');
+
+  const chatTabGlobal = document.getElementById('chat-tab-global');
+  const chatTabUsers = document.getElementById('chat-tab-users');
+  const chatOnlineCountLabel = document.getElementById('chat-online-count-label');
+
+  const chatDmBar = document.getElementById('chat-dm-bar');
+  const chatDmTargetName = document.getElementById('chat-dm-target-name');
+  const chatDmBackBtn = document.getElementById('chat-dm-back-btn');
+
+  const chatMessagesContainer = document.getElementById('chat-messages-container');
+  const chatUsersContainer = document.getElementById('chat-users-container');
+
+  const chatBtnAttach = document.getElementById('chat-btn-attach');
+  const chatInputText = document.getElementById('chat-input-text');
+  const chatBtnSend = document.getElementById('chat-btn-send');
+
+  const chatShareModal = document.getElementById('chat-share-modal');
+  const chatShareFilesList = document.getElementById('chat-share-files-list');
+
+  let activeChatRoom = 'global'; // 'global' ou 'direct'
+  let activeDirectUser = null;   // { id, username }
+  let activeChatTab = 'messages'; // 'messages' ou 'users'
+  let chatUnreadCount = 0;
+  let chatMessagesList = [];
+  let chatOnlineUsers = [];
+  let chatInitialized = false;
+
+  function initChat(user) {
+    if (!user || !user.id) return;
+    chatDrawer.style.display = 'flex';
+
+    if (!chatInitialized) {
+      chatInitialized = true;
+      setupChatEventListeners();
+    }
+
+    ChatClient.connect(user);
+  }
+
+  function setupChatEventListeners() {
+    chatHeaderBar.addEventListener('click', () => {
+      toggleChatDrawer();
+    });
+
+    chatTabGlobal.addEventListener('click', () => {
+      switchChatTab('global');
+    });
+
+    chatTabUsers.addEventListener('click', () => {
+      switchChatTab('users');
+    });
+
+    chatDmBackBtn.addEventListener('click', () => {
+      switchChatTab('global');
+    });
+
+    chatBtnSend.addEventListener('click', () => {
+      sendChatMessage();
+    });
+
+    chatInputText.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        sendChatMessage();
+      }
+    });
+
+    chatBtnAttach.addEventListener('click', () => {
+      openShareFileModal();
+    });
+
+    window.addEventListener('chat:status', (e) => {
+      if (e.detail.connected) {
+        chatStatusDot.classList.add('online');
+        chatStatusDot.title = 'Conectado ao WebSocket';
+      } else {
+        chatStatusDot.classList.remove('online');
+        chatStatusDot.title = 'Desconectado do WebSocket';
+      }
+    });
+
+    window.addEventListener('chat:presence', (e) => {
+      chatOnlineUsers = e.detail || [];
+      const othersCount = chatOnlineUsers.filter(u => u.id !== currentUserProfile?.id).length;
+      chatOnlineCountLabel.textContent = `Pessoas (${othersCount})`;
+      if (activeChatTab === 'users') {
+        renderOnlineUsers();
+      }
+    });
+
+    window.addEventListener('chat:history', (e) => {
+      if (e.detail && e.detail.messages) {
+        chatMessagesList = e.detail.messages;
+        if (activeChatTab === 'messages' && activeChatRoom === 'global') {
+          renderChatMessages();
+        }
+      }
+    });
+
+    window.addEventListener('chat:message', (e) => {
+      const msg = e.detail;
+      chatMessagesList.push(msg);
+
+      const isDrawerOpen = chatDrawer.classList.contains('open');
+      const isCurrentContext = (activeChatRoom === 'global' && msg.target === 'global') ||
+        (activeChatRoom === 'direct' && activeDirectUser && (
+          (msg.sender_id === activeDirectUser.id && msg.target_user_id === currentUserProfile?.id) ||
+          (msg.sender_id === currentUserProfile?.id && msg.target_user_id === activeDirectUser.id)
+        ));
+
+      if (!isDrawerOpen || !isCurrentContext) {
+        chatUnreadCount++;
+        chatUnreadBadge.textContent = chatUnreadCount;
+        chatUnreadBadge.style.display = 'inline-block';
+        if (msg.sender_id !== currentUserProfile?.id) {
+          showToast(`Nova mensagem de ${msg.sender_name} no chat!`, 'info');
+        }
+      }
+
+      if (isCurrentContext && activeChatTab === 'messages') {
+        renderChatMessages();
+      }
+    });
+  }
+
+  function toggleChatDrawer() {
+    const isNowOpen = chatDrawer.classList.toggle('open');
+    if (isNowOpen) {
+      chatUnreadCount = 0;
+      chatUnreadBadge.style.display = 'none';
+      if (activeChatTab === 'messages') {
+        renderChatMessages();
+      } else {
+        renderOnlineUsers();
+      }
+      setTimeout(() => chatInputText.focus(), 150);
+    }
+  }
+
+  function switchChatTab(tab) {
+    if (tab === 'global') {
+      activeChatRoom = 'global';
+      activeDirectUser = null;
+      activeChatTab = 'messages';
+
+      chatTabGlobal.classList.add('active');
+      chatTabUsers.classList.remove('active');
+      chatDmBar.classList.remove('active');
+      chatHeaderTitle.textContent = '# Geral (Broadcast)';
+
+      chatMessagesContainer.style.display = 'flex';
+      chatUsersContainer.classList.remove('active');
+      renderChatMessages();
+    } else if (tab === 'users') {
+      activeChatTab = 'users';
+
+      chatTabUsers.classList.add('active');
+      chatTabGlobal.classList.remove('active');
+      chatDmBar.classList.remove('active');
+      chatHeaderTitle.textContent = 'Colegas Online';
+
+      chatMessagesContainer.style.display = 'none';
+      chatUsersContainer.classList.add('active');
+      renderOnlineUsers();
+    }
+  }
+
+  function openDirectChat(user) {
+    activeChatRoom = 'direct';
+    activeDirectUser = user;
+    activeChatTab = 'messages';
+
+    chatTabGlobal.classList.remove('active');
+    chatTabUsers.classList.remove('active');
+    chatDmBar.classList.add('active');
+    chatDmTargetName.textContent = user.username;
+    chatHeaderTitle.textContent = `@${user.username}`;
+
+    chatMessagesContainer.style.display = 'flex';
+    chatUsersContainer.classList.remove('active');
+    renderChatMessages();
+
+    if (!chatDrawer.classList.contains('open')) {
+      toggleChatDrawer();
+    }
+  }
+
+  function renderOnlineUsers() {
+    chatUsersContainer.innerHTML = '';
+    const otherUsers = chatOnlineUsers.filter(u => u.id !== currentUserProfile?.id);
+
+    if (otherUsers.length === 0) {
+      chatUsersContainer.innerHTML = `
+        <div style="text-align:center; padding:2rem 1rem; color:var(--text-tertiary); font-size:0.75rem;">
+          Nenhum outro colega online no momento.<br>Abra outra aba para simular um segundo usuário!
+        </div>
+      `;
+      return;
+    }
+
+    otherUsers.forEach(u => {
+      const row = document.createElement('div');
+      row.className = 'chat-user-row';
+      const initial = (u.username || 'U').charAt(0).toUpperCase();
+
+      row.innerHTML = `
+        <div class="chat-user-info">
+          <div class="chat-user-avatar">${initial}</div>
+          <div>
+            <div style="font-weight:600; font-size:0.775rem; color:var(--text-primary);">${escapeHtml(u.username)}</div>
+            <div style="font-size:0.65rem; color:#10b981; display:flex; align-items:center; gap:0.25rem;">
+              <span class="status-dot online" style="width:6px; height:6px;"></span> Online
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-secondary btn-chat-direct" style="font-size:0.675rem; padding:0.25rem 0.5rem;">
+          Conversar
+        </button>
+      `;
+
+      row.querySelector('.btn-chat-direct').addEventListener('click', () => {
+        openDirectChat(u);
+      });
+
+      chatUsersContainer.appendChild(row);
+    });
+  }
+
+  function renderChatMessages() {
+    chatMessagesContainer.innerHTML = '';
+
+    const filtered = chatMessagesList.filter(m => {
+      if (activeChatRoom === 'global') {
+        return m.target === 'global';
+      }
+      if (activeChatRoom === 'direct' && activeDirectUser) {
+        return m.target === 'direct' && (
+          (m.sender_id === currentUserProfile?.id && Number(m.target_user_id) === Number(activeDirectUser.id)) ||
+          (Number(m.sender_id) === Number(activeDirectUser.id) && Number(m.target_user_id) === Number(currentUserProfile?.id))
+        );
+      }
+      return false;
+    });
+
+    if (filtered.length === 0) {
+      chatMessagesContainer.innerHTML = `
+        <div style="text-align:center; padding:2.5rem 1rem; color:var(--text-tertiary); font-size:0.75rem;">
+          ${activeChatRoom === 'global' ? 'Canal Geral da Equipe (Broadcast). Envie uma mensagem ou compartilhe um arquivo!' : `Inicie uma conversa direta 1-para-1 com @${activeDirectUser?.username}!`}
+        </div>
+      `;
+      return;
+    }
+
+    filtered.forEach(m => {
+      const isMine = m.sender_id === currentUserProfile?.id;
+      const bubble = document.createElement('div');
+      bubble.className = `chat-bubble ${isMine ? 'mine' : 'theirs'}`;
+
+      const timeStr = m.timestamp ? new Date(m.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+
+      let fileHtml = '';
+      if (m.file) {
+        const downloadUrl = `${Api.getBaseUrl()}/api/drive/files/${m.file.id}/download/`;
+        fileHtml = `
+          <div class="chat-file-card">
+            <div class="chat-file-header">
+              <svg class="icon icon-sm" viewBox="0 0 24 24" style="color:var(--accent-primary);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span class="chat-file-name" title="${escapeHtml(m.file.original_name)}">${escapeHtml(m.file.original_name)}</span>
+            </div>
+            <div class="chat-file-meta">
+              <span>${m.file.size_mb || (m.file.size_bytes ? (m.file.size_bytes / (1024*1024)).toFixed(2) : '0')} MB</span>
+              ${m.file.protocolo_soap ? `<span class="file-type-pill" style="color:var(--accent-primary); font-size:0.575rem;" title="Protocolo: ${m.file.protocolo_soap}">CERTIFICADO</span>` : ''}
+            </div>
+            <div class="chat-file-actions">
+              <a href="${downloadUrl}" target="_blank" class="chat-file-btn chat-file-btn-download">
+                Baixar
+              </a>
+              <button class="chat-file-btn chat-file-btn-save" data-file-id="${m.file.id}" ${isMine ? 'title="Você é o proprietário (clique para duplicar)"' : 'title="Copiar para o seu Drive"'}>
+                <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                <span>${isMine ? 'Salvar Cópia' : 'Salvar no Drive'}</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      bubble.innerHTML = `
+        <div class="chat-bubble-sender">
+          <span>${isMine ? 'Você' : escapeHtml(m.sender_name)}</span>
+          <span class="chat-bubble-time">${timeStr}</span>
+        </div>
+        ${m.text ? `<div>${escapeHtml(m.text)}</div>` : ''}
+        ${fileHtml}
+      `;
+
+      const saveBtn = bubble.querySelector('.chat-file-btn-save');
+      if (saveBtn) {
+        saveBtn.addEventListener('click', async () => {
+          saveBtn.disabled = true;
+          saveBtn.innerHTML = '<span>Salvando...</span>';
+          try {
+            await Api.copyFileToMe(m.file.id);
+            showToast(`Arquivo "${m.file.original_name}" salvo no seu Drive com sucesso!`, 'success');
+            saveBtn.innerHTML = '<span>Salvo no Drive</span>';
+            saveBtn.style.background = 'var(--bg-surface-elevated)';
+            saveBtn.style.color = 'var(--text-secondary)';
+            loadUserData();
+            loadFiles();
+          } catch (err) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = `
+              <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              <span>Salvar no Drive</span>
+            `;
+            showToast('Erro ao salvar no seu Drive: ' + err.message, 'error');
+          }
+        });
+      }
+
+      chatMessagesContainer.appendChild(bubble);
+    });
+
+    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+  }
+
+  function sendChatMessage() {
+    const text = chatInputText.value.trim();
+    if (!text) return;
+
+    try {
+      ChatClient.sendMessage(
+        text,
+        activeChatRoom,
+        activeDirectUser ? activeDirectUser.id : null,
+        activeDirectUser ? activeDirectUser.username : null
+      );
+      chatInputText.value = '';
+    } catch (err) {
+      showToast(err.message, 'warning');
+    }
+  }
+
+  function shareFileInChat(file) {
+    if (!file || !file.id) return;
+    if (!chatDrawer.classList.contains('open')) {
+      toggleChatDrawer();
+    }
+
+    try {
+      ChatClient.shareFile(
+        file,
+        '',
+        activeChatRoom,
+        activeDirectUser ? activeDirectUser.id : null,
+        activeDirectUser ? activeDirectUser.username : null
+      );
+      showToast(`Arquivo "${file.original_name}" compartilhado no chat!`, 'info');
+    } catch (err) {
+      showToast(err.message, 'warning');
+    }
+  }
+
+  function openShareFileModal() {
+    chatShareFilesList.innerHTML = '';
+
+    if (!currentFiles || currentFiles.length === 0) {
+      chatShareFilesList.innerHTML = `
+        <div style="text-align:center; padding:1.5rem; color:var(--text-secondary); font-size:0.8rem;">
+          Você não possui arquivos no seu Drive para compartilhar.
+        </div>
+      `;
+      chatShareModal.classList.add('active');
+      return;
+    }
+
+    currentFiles.forEach(f => {
+      const item = document.createElement('div');
+      item.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:0.5rem 0.75rem; background:var(--bg-primary); border:1px solid var(--border-color); border-radius:var(--radius-sm); cursor:pointer;';
+      item.innerHTML = `
+        <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:280px;">
+          <div style="font-weight:600; font-size:0.8rem; color:var(--text-primary);">${escapeHtml(f.original_name)}</div>
+          <div style="font-size:0.7rem; color:var(--text-secondary);">${f.size_mb || (f.size_bytes / (1024*1024)).toFixed(2)} MB</div>
+        </div>
+        <button class="btn btn-primary" style="font-size:0.7rem; padding:0.25rem 0.6rem;">
+          Compartilhar
+        </button>
+      `;
+
+      item.addEventListener('click', () => {
+        chatShareModal.classList.remove('active');
+        shareFileInChat(f);
+      });
+
+      chatShareFilesList.appendChild(item);
+    });
+
+    chatShareModal.classList.add('active');
+  }
+
+  function escapeHtml(unsafe) {
+    if (!unsafe) return '';
+    return String(unsafe).replace(/[&<>"']/g, (m) => {
+      switch (m) {
+        case '&': return '&amp;';
+        case '<': return '&lt;';
+        case '>': return '&gt;';
+        case '"': return '&quot;';
+        case "'": return '&#039;';
+      }
+    });
+  }
+
   init();
 });

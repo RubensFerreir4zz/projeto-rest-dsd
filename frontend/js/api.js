@@ -1,15 +1,8 @@
-/**
- * Módulo de Integração com o API Gateway (Porta 8000)
- * Responsável pelas requisições JWT e pelo consumo das ações HATEOAS.
- */
-
 const Api = {
-  // Permite configurar ou auto-detectar o IP do servidor em rede local
   getBaseUrl() {
     const saved = localStorage.getItem('gateway_url');
     if (saved) return saved;
     
-    // Se acessado por outro aparelho via IP (ex: 192.168.x.x), aponta para o mesmo IP na porta 8000
     if (window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && window.location.protocol.startsWith('http')) {
       return `http://${window.location.hostname}:8000`;
     }
@@ -67,8 +60,6 @@ const Api = {
     return data;
   },
 
-  // --- Autenticação ---
-
   async register(username, email, password, plan = 'free') {
     const res = await fetch(`${this.getBaseUrl()}/api/auth/register/`, {
       method: 'POST',
@@ -87,8 +78,6 @@ const Api = {
     return this.handleResponse(res);
   },
 
-  // --- Perfil e Cota ---
-
   async getProfile() {
     const res = await fetch(`${this.getBaseUrl()}/api/me/`, {
       method: 'GET',
@@ -96,8 +85,6 @@ const Api = {
     });
     return this.handleResponse(res);
   },
-
-  // --- Arquivos ---
 
   async listFiles() {
     const res = await fetch(`${this.getBaseUrl()}/api/drive/files/`, {
@@ -119,12 +106,6 @@ const Api = {
     return this.handleResponse(res);
   },
 
-  // --- Execução Dinâmica de HATEOAS ---
-
-  /**
-   * Executa uma ação diretamente a partir do objeto _links fornecido pelo Gateway.
-   * Exemplo: hateoasLink = { href: "/api/drive/files/5/", method: "DELETE" }
-   */
   async executeHateoas(hateoasLink, body = null) {
     if (!hateoasLink || !hateoasLink.href) {
       throw new Error('Link HATEOAS inválido.');
@@ -159,5 +140,13 @@ const Api = {
     return hateoasPreviewLink.href.startsWith('http')
       ? hateoasPreviewLink.href
       : `${this.getBaseUrl()}${hateoasPreviewLink.href}`;
+  },
+
+  async copyFileToMe(fileId) {
+    const res = await fetch(`${this.getBaseUrl()}/api/drive/files/${fileId}/copy_to_me/`, {
+      method: 'POST',
+      headers: this.getAuthHeaders()
+    });
+    return this.handleResponse(res);
   }
 };
