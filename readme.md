@@ -66,6 +66,7 @@ O script inicializará automaticamente:
 - **Documentação ReDoc (Gateway):** [http://localhost:8000/api/redoc/](http://localhost:8000/api/redoc/)
 - **Schema OpenAPI:** [http://localhost:8000/api/schema/](http://localhost:8000/api/schema/)
 - **Contrato WSDL (Serviço SOAP):** [http://localhost:8003/?wsdl](http://localhost:8003/?wsdl)
+- **Servidor WebSocket (Chat em Tempo Real):** `ws://localhost:8004/`
 
 ---
 
@@ -75,8 +76,17 @@ Além dos microsserviços REST, a aplicação conta com um serviço SOAP funcion
 * **Servidor Provedor (`:8003`):** Implementado em Python com a biblioteca **Spyne**, integrado diretamente ao banco de dados do Django (`storage.models.File`). É responsável por emitir hashes SHA-256 criptográficos e auditar a integridade dos arquivos em disco via contrato WSDL.
 * **Cliente Consumidor:** O próprio **Front-end Web em JavaScript** (`:3000`), comprovando interoperabilidade entre tecnologias distintas (Python no servidor e JavaScript no cliente).
 
+---
+
+## 💬 Serviço WebSocket & Colaboração em Tempo Real (Chat e Compartilhamento)
+
+Comunicação bidirecional contínua via protocolo `ws://` puro utilizando a biblioteca **websockets** em Python:
+* **Servidor WebSocket (`:8004`):** Gerencia conexões ativas, presença online, histórico recente, **Broadcast** no canal `#geral` e roteamento de mensagens privadas **1-para-1**.
+* **Gaveta Flutuante (Estilo LinkedIn / Facebook):** Integrada no canto inferior direito do cliente web, permitindo conversar, acompanhar quem está online e compartilhar arquivos do Drive em tempo real.
+* **Adicionar ao meu Drive:** Ao receber um arquivo no chat, o destinatário pode cloná-lo diretamente para seu próprio armazenamento com um clique via REST, mantendo o hash SHA-256 e a certidão notarial SOAP intactos.
+
 ### Inicialização Unificada:
-O script PowerShell já inicia todos os 5 serviços automaticamente (Accounts, Storage, Gateway, SOAP e Frontend):
+O script PowerShell já inicia todos os 6 serviços automaticamente (Accounts, Storage, Gateway, SOAP, WebSocket e Frontend):
 ```powershell
 .\run_servers.ps1
 ```

@@ -1,4 +1,4 @@
-﻿# Script de Inicialização dos Serviços Distribuídos (DSD - IFRN)
+# Script de Inicialização dos Serviços Distribuídos (DSD - IFRN)
 # Sobe o Gateway, os dois Microsserviços e o Servidor Web do Frontend
 
 $root = $PSScriptRoot
@@ -37,11 +37,15 @@ Write-Host "[3/4] Iniciando API Gateway na porta 8000..." -ForegroundColor Yello
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$root\backend\gateway'; Write-Host '--- API GATEWAY (8000) ---' -ForegroundColor Green; & '$venvPython' manage.py runserver 0.0.0.0:8000"
 
 # 4. Service SOAP - Cartório Digital (Porta 8003)
-Write-Host "[4/5] Iniciando Service SOAP (Cartório Digital) na porta 8003..." -ForegroundColor Yellow
+Write-Host "[4/6] Iniciando Service SOAP (Cartório Digital) na porta 8003..." -ForegroundColor Yellow
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$root'; Write-Host '--- SERVICE SOAP (8003) ---' -ForegroundColor Green; & '$venvPython' backend/service_soap/server.py"
 
-# 5. Servidor Web do Front-end (Porta 3000)
-Write-Host "[5/5] Iniciando Cliente Web na porta 3000..." -ForegroundColor Yellow
+# 5. Service Chat - WebSocket em Tempo Real (Porta 8004)
+Write-Host "[5/6] Iniciando Service Chat (WebSocket) na porta 8004..." -ForegroundColor Yellow
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$root'; Write-Host '--- SERVICE CHAT WEBSOCKET (8004) ---' -ForegroundColor Green; & '$venvPython' backend/service_chat/server.py"
+
+# 6. Servidor Web do Front-end (Porta 3000)
+Write-Host "[6/6] Iniciando Cliente Web na porta 3000..." -ForegroundColor Yellow
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$root\frontend'; Write-Host '--- SAFODRIVE WEB CLIENT (3000) ---' -ForegroundColor Green; & '$venvPython' -m http.server 3000 --bind 0.0.0.0"
 
 Start-Sleep -Seconds 2
@@ -57,6 +61,8 @@ Write-Host "Swagger UI do Gateway (REST):" -ForegroundColor Cyan
 Write-Host "   http://$($localIp):8000/api/docs/" -ForegroundColor Yellow
 Write-Host "Contrato WSDL (SOAP):" -ForegroundColor Cyan
 Write-Host "   http://$($localIp):8003/?wsdl" -ForegroundColor Yellow
+Write-Host "Serviço WebSocket (Chat):" -ForegroundColor Cyan
+Write-Host "   ws://$($localIp):8004/" -ForegroundColor Yellow
 Write-Host "==========================================================" -ForegroundColor Green
 
 # Abre automaticamente o navegador
