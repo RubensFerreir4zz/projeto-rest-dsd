@@ -54,6 +54,8 @@ Execute o script PowerShell para iniciar todos os serviços simultaneamente:
 O script inicializará automaticamente:
 1. `Service Accounts` em `http://127.0.0.1:8001`
 2. `Service Storage` em `http://127.0.0.1:8002`
+3. `Service Soap` em `http://127.0.0.1:8003`
+4. `Service Chat` em `htpp:/127.0.0.1:8004`
 3. `API Gateway` em `http://127.0.0.1:8000`
 4. `Cliente Web` em `http://127.0.0.1:3000`
 
