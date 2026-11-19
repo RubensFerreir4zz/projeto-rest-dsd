@@ -1,8 +1,10 @@
 import asyncio
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 import websockets
+from websockets.asyncio.server import ServerConnection, serve
 
 logging.basicConfig(
     level=logging.INFO,
@@ -68,7 +70,7 @@ async def broadcast_to_all(payload_str: str):
         )
 
 
-async def chat_handler(websocket):
+async def chat_handler(websocket: ServerConnection):
     """Gerenciador principal do ciclo de vida da conexão WebSocket."""
     current_user_id = None
     current_username = "Anônimo"
@@ -117,11 +119,11 @@ async def chat_handler(websocket):
                 target = data.get("target", "global")
                 target_user_id = data.get("target_user_id")
                 target_username = data.get("target_username", "Privado")
-                timestamp = datetime.now(timezone.utc).isoformat()
+                timestamp = datetime.now(UTC).isoformat()
 
                 msg_obj = {
                     "type": "chat_message",
-                    "id": f"msg_{datetime.now(timezone.utc).timestamp()}",
+                    "id": f"msg_{datetime.now(UTC).timestamp()}",
                     "sender_id": current_user_id,
                     "sender_name": current_username,
                     "target": target,
@@ -156,11 +158,11 @@ async def chat_handler(websocket):
                 target_user_id = data.get("target_user_id")
                 target_username = data.get("target_username", "Privado")
                 text = data.get("text", "").strip()
-                timestamp = datetime.now(timezone.utc).isoformat()
+                timestamp = datetime.now(UTC).isoformat()
 
                 share_obj = {
                     "type": "file_share",
-                    "id": f"file_{datetime.now(timezone.utc).timestamp()}",
+                    "id": f"file_{datetime.now(UTC).timestamp()}",
                     "sender_id": current_user_id,
                     "sender_name": current_username,
                     "target": target,
@@ -186,8 +188,8 @@ async def chat_handler(websocket):
 
     except websockets.exceptions.ConnectionClosed:
         pass
-    except Exception as e:
-        logger.error(f"Erro no handler do websocket: {e}")
+    except Exception:
+        logger.exception("Erro no handler do websocket")
     finally:
         if current_user_id and current_user_id in active_users:
             active_users[current_user_id]["sockets"].discard(websocket)
@@ -207,7 +209,7 @@ async def main():
     print(" Protocolo: ws:// puro | Suporte: Broadcast e 1-para-1")
     print("=" * 60)
 
-    async with websockets.serve(chat_handler, host, port):
+    async with serve(chat_handler, host, port):
         await asyncio.get_running_loop().create_future()
 
 
